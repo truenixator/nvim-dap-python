@@ -208,7 +208,7 @@ end
 
 --- Register the python debug adapter
 ---
----@param python_path "python"|"python3"|"uv"|"debugpy-adapter"|string|nil Path to python interpreter. Must be in $PATH or an absolute path and needs to have the debugpy package installed. Defaults to `python3`.
+---@param python_path "python"|"python3"|"uv"|"uv_isolated"|"debugpy-adapter"|string|nil Path to python interpreter. Must be in $PATH or an absolute path and needs to have the debugpy package installed. Defaults to `python3`.
 --- If `uv` then debugpy is launched via `uv run`
 ---@param opts? dap-python.setup.opts See |dap-python.setup.opts|
 function M.setup(python_path, opts)
@@ -241,12 +241,16 @@ function M.setup(python_path, opts)
         adapter = {
           type = "executable",
           command = python_path,
-          args = {"run", "--with", "debugpy", "python", "-m", "debugpy.adapter"},
           enrich_config = enrich_config,
           options = {
             source_filetype = "python"
           }
         }
+        if (opts ~= nil) and (opts["isolated_uv"] == true) then
+          adapter.args = {"run", "--isolated", "--with", "debugpy", "python", "-m", "debugpy.adapter"}
+        else
+          adapter.args = {"run", "--with", "debugpy", "python", "-m", "debugpy.adapter"}
+        end
       elseif basename == "debugpy-adapter" then
         adapter = {
           type = "executable",
